@@ -1,6 +1,10 @@
 /*
- * Calculate the Cumulative Density Function(CDF).
+ * Calculate the cumulative density function(CDF) from the integration of the
+ * standard normal distribution(SND) function.
+ *
  * compile command: mpicc -Wall -std=c99 -o cdf cdf.c
+ *
+ * Kyungwon Chun (kwchun@gist.ac.kr)
  */
 
 #include "mpi.h"
@@ -8,7 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-const double PI = 4.0 * atan(1.0);
+#define PI acos(-1.0)
 
 // standard normal distribution function
 inline double snd(double);
@@ -20,15 +24,15 @@ inline double snd(double x)
   double exponent;
 
   exponent = -0.5 * pow((x - mu) / s2, 2);
-  return exp(exponent) / sqrt(2 * s2 * PI);
+  return exp(exponent) / sqrt(2 * PI * s2);
 }
 
 int main(int argc, char *argv[])
 {
-  int n; /* # of rectangles */
+  double h = 1.e-5; // step size
+  double left = -15.0; // left boundary of integration
+  double cdf;
   int myid, numprocs;
-  const double PI = 4.0 * atan(1.0);
-  double h, sum, x;
   double startwtime = 0.0, endwtime;
   int namelen;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
@@ -44,9 +48,22 @@ int main(int argc, char *argv[])
   
   startwtime = MPI_Wtime();
 
-  for (int i = myid; i < n; i += numprocs) {
-    x = h * i;
-    printf("%f: %f\n", x, snd(x));
+  for (double right = 0; right <= 1.0; right += 0.1) {
+    int i = myid;
+    double sum = 0.0;
+    double x = (i + 0.5) * h + left;
+    double mycdf;
+
+    while (x < right) {
+      x = (i + 0.5) * h + left;
+      sum += snd(x);
+      i += numprocs;
+    }
+    mycdf = h * sum;
+    MPI_Reduce(&mycdf, &cdf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (myid == 0)
+      printf("%f\t%f\n", right, cdf);
   }
 
   if (myid == 0) {

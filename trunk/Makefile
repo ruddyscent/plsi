@@ -3,8 +3,9 @@
 CC = mpicc
 
 INCLUDE = 
-LIBS = -lm
 CFLAGS = -g -Wall -std=c99 $(INCLUDE)
+LIBS = -lm
+LDFLAGS = $(LIBS)
 
 TARGET = cpi icpi cdf
 
