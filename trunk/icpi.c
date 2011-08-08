@@ -14,7 +14,7 @@ inline double f(double);
 
 inline double f(double a)
 {
-  return 4.0 / (1.0 + a*a);
+    return 4.0 / (1.0 + a*a);
 }
 
 int main(int argc, char *argv[])
