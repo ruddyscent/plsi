@@ -1,8 +1,8 @@
-! parallel_pi_v1.f90 - Fortran 90 program which calculates the value of Pi in parallel written at USC parallel programming camp. This uses MPI send/recv routine.
-! Author: Huioon Kim, pcandme@gist.ac.kr
-! Last modified by Huioon Kim, 2011.8.6
+! ppi_v1.f90 - Fortran 90 program which calculates the value of Pi in parallel 
+! written at USC parallel programming camp. This uses MPI send/recv routine.
+! Huioon Kim(pcandme@gist.ac.kr)
 
-program parallel_pi_v1
+program ppi_v1
 implicit none
 
 include 'mpif.h'

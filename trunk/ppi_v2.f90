@@ -1,14 +1,14 @@
-! parallel_pi_v2.f90 - Fortran 90 program which calculates the value of Pi in parallel written at USC parallel programming camp. This uses MPI reduce routine.
-! Author: Huioon Kim, pcandme@gist.ac.kr
-! Last modified by Huioon Kim, 2011.8.6
+! ppi_v2.f90 - Fortran 90 program which calculates the value of Pi in parallel 
+! written at USC parallel programming camp. This uses MPI reduce routine.
+! Huioon Kim(pcandme@gist.ac.kr)
 
-program parallel_pi_v2
+program ppi_v2
 implicit none
 
 include 'mpif.h'
 
-integer ierr, idx, myrank, nprocs
-integer status(MPI_STATUS_SIZE)
+integer ierr, myrank, nprocs!, idx
+! integer status(MPI_STATUS_SIZE)
 integer*8, parameter :: num_step = 100000
 integer*8 :: i, ista, iend, stride, remain
 real(kind=8) :: sum, local_pi, pi, step, x

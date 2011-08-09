@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-2011 PLSI 병렬컴퓨팅 경진대회 준비
+2011 PLSI 병렬컴퓨팅 경진대회(http://www.plsi.or.kr/) 대비 스터디 코드
 
-적분 계산: cpi.c, icpi.c, cdf.c
-분석적 계산: analytical_calculation.nb
+* numerical integration: cpi.c, icpi.c, cpi2.c, ppi_v1.f90, ppi_v2.f90, 
+  cdf.c, pi_montecarlo.c
 
-svn 저장소
-svn+ssh://magi.gist.ac.kr/var/lib/svn/plsi
+* svn repository: svn+ssh://magi.gist.ac.kr/var/lib/svn/plsi
 
-websvn 주소
-http://ontl.gist.ac.kr/svn/
+* websvn address: http://ontl.gist.ac.kr/svn
 
-전경원(kwchun@gist.ac.kr)
+Kyungwon Chun(kwchun@gist.ac.kr), Huioon Kim(pcandme@gist.ac.kr)
