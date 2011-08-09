@@ -1,6 +1,5 @@
 /*
  * Calculate the pi using the Monte Carlo method.
- * compile command: mpicc -Wall -std=c99 -o pi_montecarlo pi_montecarlo.c
  *
  * Kyungwon Chun (kwchun@gist.ac.kr)
  */

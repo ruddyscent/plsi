@@ -1,6 +1,7 @@
 /*
  * Calculate the pi.
- * compile command: mpicc -Wall -std=c99 -o cpi cpi.c
+ *
+ * Kyungwon Chun (kwchun@gist.ac.kr)
  */
 
 #include "mpi.h"

@@ -2,8 +2,6 @@
  * Calculate the cumulative density function(CDF) from the integration of the
  * standard normal distribution(SND) function.
  *
- * compile command: mpicc -Wall -std=c99 -o cdf cdf.c
- *
  * Kyungwon Chun (kwchun@gist.ac.kr)
  */
 
