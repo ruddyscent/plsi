@@ -10,9 +10,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-inline double f(double);
-double error_bound(double);
-
 inline double f(double a)
 {
     return 4.0 / (1.0 + a * a);
@@ -20,9 +17,9 @@ inline double f(double a)
 
 // Error bound estimation of a Riemann middle sum.
 // Reference: http://en.wikipedia.org/wiki/Riemann_sum
-double error_bound(double n)
+double error_bound(int n)
 {
-  return 2.0 * (1.0 - 0.0) / (24.0 * n * n);
+  return 1.0 / (12.0 * n * n);
 }
 
 int main(int argc, char *argv[])
@@ -31,7 +28,7 @@ int main(int argc, char *argv[])
     int done = 0, myid, numprocs;
     const double PI = 4.0 * atan(1.0);
     double mypi, pi, h, sum, x;
-    double startwtime = 0.0, endwtime;
+    double startwtime, endwtime;
     int namelen;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     
@@ -69,9 +66,9 @@ int main(int argc, char *argv[])
 	    
 	    if (myid == 0) {
 		endwtime = MPI_Wtime();
-		printf("pi is approximately %.16f, Error is %e\n",
+		printf("The pi is approximately %.16f, Error is %e\n",
 		       pi, fabs(pi - PI));
-		printf("wall clock time = %f\n", endwtime - startwtime);
+		printf("Wall clock time = %f [sec]\n", endwtime - startwtime);
 		fflush(stdout);
 	    }
 	}

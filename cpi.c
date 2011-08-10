@@ -9,9 +9,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-inline double f(double);
-double error_bound(double);
-
 inline double f(double a)
 {
   return 4.0 / (1.0 + a * a);
@@ -19,19 +16,17 @@ inline double f(double a)
 
 // Error bound estimation of a Riemann middle sum.
 // Reference: http://en.wikipedia.org/wiki/Riemann_sum
-double error_bound(double n)
+double error_bound(int n)
 {
-  return 2.0 * (1.0 - 0.0) / (24.0 * n * n);
+  return 1.0 / (12.0 * n * n);
 }
 
 int main(int argc, char *argv[])
 {
   const double PI = 4.0 * atan(1.0);
   int n; /* # of rectangles */
-  int myid, numprocs;
-  double mypi, pi, h, sum, x;
-  double startwtime = 0.0, endwtime;
-  int namelen;
+  int myid, numprocs, namelen;
+  double mypi, pi, h, sum = 0.0, startwtime = 0.0, endwtime;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
   
   MPI_Init(&argc, &argv);
@@ -57,11 +52,10 @@ int main(int argc, char *argv[])
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   
-  h = 1.0 / (double)n;
-  sum = 0.0;
+  h = 1.0 / n;
   /* A slightly better approach starts from large i and works back. */
   for (int i = myid; i < n; i += numprocs) {
-    x = h * ((double)i + 0.5);
+    double x = h * (i + 0.5);
     sum += f(x);
   }
   mypi = h * sum;
@@ -72,7 +66,7 @@ int main(int argc, char *argv[])
     endwtime = MPI_Wtime();
     printf("The pi is approximately %.16f, Error is %e\n",
 	   pi, fabs(pi - PI));
-    printf("Wall clock time = %f\n", endwtime - startwtime);
+    printf("Wall clock time = %f [sec]\n", endwtime - startwtime);
     fflush(stdout);
   }
 
