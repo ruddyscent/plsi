@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     int done = 0, myid, numprocs;
     const double PI = 4.0 * atan(1.0);
     double mypi, pi, h, sum, x;
-    double startwtime, endwtime;
+    double startwtime = 0.0, endwtime;
     int namelen;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     
