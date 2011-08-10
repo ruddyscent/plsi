@@ -10,10 +10,18 @@
 #include <math.h>
 
 inline double f(double);
+double error_bound(double);
 
 inline double f(double a)
 {
-  return 4.0 / (1.0 + a*a);
+  return 4.0 / (1.0 + a * a);
+}
+
+// Error bound estimation of a Riemann middle sum.
+// Reference: http://en.wikipedia.org/wiki/Riemann_sum
+double error_bound(double n)
+{
+  return 2.0 * (1.0 - 0.0) / (24.0 * n * n);
 }
 
 int main(int argc, char *argv[])
@@ -36,8 +44,10 @@ int main(int argc, char *argv[])
   fflush(stdout);
   
   if (myid == 0) {
-    if (argc == 2) 
-      sscanf(argv[1], "%d", &n);
+    if (argc == 2) {
+	sscanf(argv[1], "%d", &n);
+	printf("Error will be bounded in %e\n", error_bound(n));
+    }
     else {
       fprintf(stderr, "Usage: cpi [# of rectangles]\n");
       return EXIT_FAILURE;
@@ -60,9 +70,9 @@ int main(int argc, char *argv[])
   
   if (myid == 0) {
     endwtime = MPI_Wtime();
-    printf("pi is approximately %.16f, Error is %.16f\n",
+    printf("The pi is approximately %.16f, Error is %e\n",
 	   pi, fabs(pi - PI));
-    printf("wall clock time = %f\n", endwtime - startwtime);
+    printf("Wall clock time = %f\n", endwtime - startwtime);
     fflush(stdout);
   }
 
