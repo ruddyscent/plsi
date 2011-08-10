@@ -8,7 +8,7 @@ FCFLAGS = -g -Wall
 LIBS = -lm
 LDFLAGS = $(LIBS)
 
-TARGET = cpi icpi cdf pi_montecarlo cpi2 ppi_v1 ppi_v2
+TARGET = cpi icpi cdf pi_montecarlo cpi2 ppi_v1 ppi_v2 scdf
 
 all : $(TARGET)
 

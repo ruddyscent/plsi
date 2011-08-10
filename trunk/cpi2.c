@@ -1,6 +1,6 @@
 /* 
- * cpi2.c - C version of the Fortran90 code calculating Pi in parallel written 
- * in the USC parallel programming camp.
+ * cpi2.c - C version of the Fortran90 code calculating pi in parallel, 
+ * written in the USC parallel programming camp.
  *
  * Huioon Kim (pcandme@gist.ac.kr)
  */
@@ -10,14 +10,25 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define min(a, b) (((a)<(b))? (a):(b))
+inline int min(int a, int b)
+{
+  return a < b ? a : b;
+}
 
-#define NUM_STEP 100000
+// Error bound estimation of a Riemann middle sum.
+// Reference: http://en.wikipedia.org/wiki/Riemann_sum
+double error_bound(int n)
+{
+  return 1.0 / (12.0 * n * n);
+}
 
 int main(int argc, char *argv[])
 {
-  int myrank, nprocs, i, ista, iend, remain, stride;
-  double sum, step, local_pi, pi, x, stime, etime;
+  const int NUM_STEP = 100000;
+  int myrank, nprocs, ista, iend, remain, stride;
+  double local_pi, pi, stime, etime;
+  double sum = 0.0;
+  double step = 1.0 / NUM_STEP;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -26,24 +37,18 @@ int main(int argc, char *argv[])
   stride = NUM_STEP / nprocs;
   remain = NUM_STEP % nprocs;
 
-  ista = myrank * stride + min(myrank, remain) + 1;
-  iend = ista + stride - 1;
+  ista = myrank * stride + min(myrank, remain);
+  iend = (myrank + 1) * stride + min(myrank + 1, remain);
 
-  if (remain > myrank) 
-    iend = iend + 1;
-
-  step = (1.0 / NUM_STEP);
-    
-  sum = 0.0;
-
-  if (myrank == 0)
+  if (myrank == 0) {
     printf("----------------------------------------------\n");
-
+    printf(" Error bound estimation: %11.5e\n", error_bound(NUM_STEP));
+  }
   stime = MPI_Wtime();
 
-  for (i = ista; i <= iend; i++) {
-    x = (i - 0.5) * step;
-    sum = sum + 4.0 / (1.0 + x * x);
+  for (int i = ista; i < iend; i++) {
+    double x = (i + 0.5) * step;
+    sum += 4.0 / (1.0 + x * x);
   }
 
   local_pi = step * sum;
