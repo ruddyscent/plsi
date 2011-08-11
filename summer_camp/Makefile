@@ -8,7 +8,7 @@ FCFLAGS = -g -Wall -pedantic
 LIBS = -lm
 LDFLAGS = $(LIBS)
 
-TARGET = fppi_v1 fppi_v2 send isend bcast gather gatherv allgather reduce scatter
+TARGET = fppi_v1 fppi_v2 send isend bcast gather gatherv allgather reduce scatter fgather fprandwalk fspi hello fbcast fisend freduce fsrandwalk hello_mpi
 
 .PHONY : clean all new
 
