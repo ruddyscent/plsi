@@ -21,10 +21,8 @@ call MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
 stride = num_step / nprocs
 remain = mod(num_step, nprocs)
 
-ista = myrank * stride + min(myrank, remain) + 1
-iend = ista + stride - 1
-
-if (remain .gt. myrank) iend = iend + 1
+ista = myrank * stride + min(myrank, remain)
+iend = (myrank + 1) * stride + min(myrank + 1, remain)
 
 step = (1.0d0 / dble(num_step))
 sum = 0.0d0
@@ -35,8 +33,8 @@ endif
 
 stime = MPI_WTIME()
 
-do i = ista, iend 
-x = (dble(i) - 0.5d0) * step
+do i = ista, iend - 1
+x = (dble(i) + 0.5d0) * step
 sum = sum + 4.d0 / (1.d0 + x * x)
 enddo
 
