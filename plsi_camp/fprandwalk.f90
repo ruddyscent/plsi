@@ -1,4 +1,4 @@
-program parallel_randwalk
+program fprandwalk
 implicit none
 
 include 'mpif.h'
