@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   startwtime = MPI_Wtime();
 
   // See the 'Integrals over infinite intervals section of
-  // http://en.wikipedia.org/wiki/Numerical_integration
+  // http://en.wikipedia.org/wiki/Numerical_integration#Half-infinite_intervals
   h = 1.0 / n;
   for (double a = 0; a <= 1; a += da) {
     double sum = 0;
