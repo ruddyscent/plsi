@@ -4,7 +4,7 @@ CC = mpicc.mpich2
 FC = mpif90.mpich2
 
 CFLAGS = -g -Wall -std=c99 -pedantic
-FCFLAGS = -g -Wall -pedantic
+FCFLAGS = -g -Wall
 LIBS = -lm
 LDFLAGS = $(LIBS)
 

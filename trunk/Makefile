@@ -5,7 +5,7 @@ FC = mpif90.mpich2
 
 SUBDIRS = summer_camp
 CFLAGS = -g -Wall -std=c99 -pedantic
-FCFLAGS = -g -Wall -pedantic
+FCFLAGS = -g -Wall
 LIBS = -lm
 LDFLAGS = $(LIBS)
 TARGET = cpi icpi pcdf pi_montecarlo cpi2 scdf
