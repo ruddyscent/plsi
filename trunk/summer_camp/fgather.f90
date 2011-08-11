@@ -1,7 +1,7 @@
 program fgather
 include 'mpif.h'
 
-integer ierr, rank, size, irecv(3)
+integer ierr, myrank, nprocs, irecv(3)
 
 call MPI_INIT(ierr)
 call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)

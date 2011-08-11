@@ -3,7 +3,7 @@ implicit none
 
 include 'mpif.h'
 
-integer :: i, j, d, min_p, max_p, ierr, myrank, nprocs
+integer :: i, j, min_p, max_p, ierr, myrank, nprocs
 integer :: ista, iend
 integer, parameter :: N_P = 100000, N_W = 100000
 integer, dimension(N_P) :: part, tmp
@@ -20,7 +20,7 @@ iend = ista + (N_P / nprocs) - 1
 part = 0
 tmp = 0
 
-call srand(0.5 + myrank * 0.1)
+call srand(1 + myrank * 1)
 
 do i = ista, iend
 do j = 1, N_W
@@ -56,4 +56,4 @@ endif
 
 call MPI_FINALIZE(ierr)
 
-end program parallel_randwalk
+end program fprandwalk
