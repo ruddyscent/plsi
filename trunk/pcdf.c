@@ -16,7 +16,7 @@
 inline double pdf(double x, double mu, double s2)
 {
   const double PI = acos(-1.0);
-  double exponent = -0.5 * pow((x - mu) / s2, 2);
+  const double exponent = -0.5 * pow((x - mu) / s2, 2);
   return exp(exponent) / sqrt(2 * PI * s2);
 }
 
@@ -46,9 +46,10 @@ int main(int argc, char *argv[])
     double sum = 0;
     double mycdf;
     for (int j = myid; j < n; j += numprocs) {
-      double t = (j + 0.5) * h;
+      const double t = (j + 0.5) * h;
       sum += pdf(a - (1 - t) / t, 0, 1) / (t * t);
     }
+
     mycdf = h * sum;
     MPI_Reduce(&mycdf, &cdf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
