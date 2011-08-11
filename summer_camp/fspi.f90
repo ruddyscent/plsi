@@ -1,7 +1,7 @@
 program serial_pi
 implicit none
 
-integer*8, parameter :: num_step = 5000000000
+integer*8, parameter :: num_step = 100000
 integer*8 :: i
 real(kind=8) :: sum, step, pi, x
 

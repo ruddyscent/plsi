@@ -1,15 +1,15 @@
 program serial_randwalk
 implicit none
 
-integer :: i, j, d, min_p, max_p
+integer :: i, j, min_p, max_p
 integer, parameter :: N_P = 100000, N_W = 100000
 integer, dimension(N_P) :: part
 integer, dimension(:), allocatable :: pos
-real :: seed, rand, temp
+real :: rand, temp
 
 part = 0
 
-call srand(0.5)
+call srand(1)
 
 do i = 1, N_P
 do j = 1, N_W
