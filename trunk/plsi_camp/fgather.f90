@@ -1,4 +1,4 @@
-program gather
+program fgather
 include 'mpif.h'
 
 integer ierr, rank, size, irecv(3)

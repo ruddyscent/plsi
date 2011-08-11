@@ -1,4 +1,4 @@
-program isend
+program fisend
 include 'mpif.h'
 
 integer err, rank, size, count

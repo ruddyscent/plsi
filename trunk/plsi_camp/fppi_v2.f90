@@ -1,17 +1,17 @@
-! ppi_v1.f90 - Fortran 90 program which calculates the value of Pi in parallel 
-! written at USC parallel programming camp. This uses MPI send/recv routine.
+! fppi_v2.f90 - Fortran 90 program which calculates the value of Pi in parallel 
+! written at USC parallel programming camp. This uses MPI reduce routine.
 ! Huioon Kim(pcandme@gist.ac.kr)
 
-program ppi_v1
+program fppi_v2
 implicit none
 
 include 'mpif.h'
 
-integer ierr, idx, myrank, nprocs
-integer status(MPI_STATUS_SIZE)
+integer ierr, myrank, nprocs!, idx
+! integer status(MPI_STATUS_SIZE)
 integer*8, parameter :: num_step = 100000
 integer*8 :: i, ista, iend, stride, remain
-real(kind=8) :: sum(8), recv(8), global_sum, step, pi, x
+real(kind=8) :: sum, local_pi, pi, step, x
 real(kind=8) :: stime, etime
 
 call MPI_INIT(ierr)
@@ -25,7 +25,7 @@ ista = myrank * stride + min(myrank, remain)
 iend = (myrank + 1) * stride + min(myrank + 1, remain)
 
 step = (1.0d0 / dble(num_step))
-sum(myrank) = 0.0d0
+sum = 0.0d0
 
 if (myrank .eq. 0) then
     write(*, 400)
@@ -35,21 +35,12 @@ stime = MPI_WTIME()
 
 do i = ista, iend - 1
 x = (dble(i) + 0.5d0) * step
-sum(myrank) = sum(myrank) + 4.d0 / (1.d0 + x * x)
+sum = sum + 4.d0 / (1.d0 + x * x)
 enddo
 
-if (myrank .ne. 0) then
-    call MPI_SEND(sum, nprocs, MPI_DOUBLE_PRECISION, 0, 55, MPI_COMM_WORLD, ierr)
-else
-    global_sum = sum(myrank)
+local_pi = step * sum
 
-    do idx = 1, nprocs - 1
-    call MPI_RECV(recv, nprocs, MPI_DOUBLE_PRECISION, idx, 55, MPI_COMM_WORLD, status, ierr)
-    global_sum = global_sum + recv(idx)
-    enddo
-endif
-
-pi = step * global_sum
+call MPI_REDUCE(local_pi, pi, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 
 etime = MPI_WTIME()
 

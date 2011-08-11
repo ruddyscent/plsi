@@ -1,4 +1,4 @@
-program bcast
+program fbcast
 include 'mpif.h'
 
 integer i, ierr, rank, size, imsg(4)
