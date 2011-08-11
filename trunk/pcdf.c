@@ -1,6 +1,6 @@
 /*
- * Calculate the cumulative density function(CDF) from the integration of the
- * standard normal distribution(SND) function.
+ * Calculate the cumulative density function from the integration of the
+ * standard normal distribution function.
  *
  * Kyungwon Chun (kwchun@gist.ac.kr)
  */
@@ -10,29 +10,22 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define PI acos(-1.0)
-
-// standard normal distribution function
-inline double snd(double);
-
-inline double snd(double x)
+// probability density function
+// mu: mean
+// s2: variance
+inline double pdf(double x, double mu, double s2)
 {
-  double mu = 0; // mean
-  double s2 = 1; // variance
-  double exponent;
-
-  exponent = -0.5 * pow((x - mu) / s2, 2);
+  const double PI = acos(-1.0);
+  double exponent = -0.5 * pow((x - mu) / s2, 2);
   return exp(exponent) / sqrt(2 * PI * s2);
 }
 
 int main(int argc, char *argv[])
 {
-  double h = 1.e-5; // step size
-  double left = -15.0; // left boundary of integration
-  double cdf;
-  int myid, numprocs;
-  double startwtime = 0.0, endwtime;
-  int namelen;
+  const int n = 100000; // step size
+  const double da = 0.1;
+  double cdf, h, startwtime = 0.0, endwtime;
+  int myid, numprocs, namelen;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
 
   MPI_Init(&argc, &argv);
@@ -46,22 +39,21 @@ int main(int argc, char *argv[])
   
   startwtime = MPI_Wtime();
 
-  for (double right = 0; right <= 1.0; right += 0.1) {
-    int i = myid;
-    double sum = 0.0;
-    double x = (i + 0.5) * h + left;
+  // See the 'Integrals over infinite intervals section of
+  // http://en.wikipedia.org/wiki/Numerical_integration
+  h = 1.0 / n;
+  for (double a = 0; a <= 1; a += da) {
+    double sum = 0;
     double mycdf;
-
-    while (x < right) {
-      x = (i + 0.5) * h + left;
-      sum += snd(x);
-      i += numprocs;
+    for (int j = myid; j < n; j += numprocs) {
+      double t = (j + 0.5) * h;
+      sum += pdf(a - (1 - t) / t, 0, 1) / (t * t);
     }
     mycdf = h * sum;
     MPI_Reduce(&mycdf, &cdf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if (myid == 0)
-      printf("%f\t%f\n", right, cdf);
+      printf("%f\t%f\n", a, cdf);
   }
 
   if (myid == 0) {
