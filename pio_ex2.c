@@ -1,3 +1,9 @@
+/*
+ * pio_ex2.c - Parallal I/O example source code that reads a file with individual file pointers and prints it to screen.
+ *
+ * Huioon Kim (pcandme@gist.ac.kr)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"

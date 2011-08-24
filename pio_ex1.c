@@ -1,3 +1,9 @@
+/*
+ * pio_ex1.c - Parallal I/O example source code that writes a file with individual file pointers.
+ *
+ * Huioon Kim (pcandme@gist.ac.kr)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"
