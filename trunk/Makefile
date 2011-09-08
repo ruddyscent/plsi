@@ -10,7 +10,7 @@ LIBS = -lm
 LDFLAGS = $(LIBS)
 TARGET = cpi icpi pcdf pi_montecarlo cpi2 scdf pio_ex1 pio_ex2 pio_ex3 pio_ex4
 
-.PHONY : clean subdirs $(SUBDIRS) all new
+.PHONY : clean cleandiff cleanobj cleanbackup subdirs $(SUBDIRS) all new
 
 all : $(TARGET) subdirs
 
@@ -22,9 +22,18 @@ $(SUBDIRS) :
 .f90 :
 	$(FC) $(FCFLAGS) -o $@ $< 
 
-clean :
-	rm -rf $(TARGET) *.o core
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
+clean : cleandiff cleanobj cleanbackup
+	rm -f $(TARGET)
+	$(MAKE) -C $(SUBDIRS) clean
+
+cleandiff :
+	rm -f *.diff
+
+cleanobj :
+	rm -f *.o
+
+cleanbackup :
+	rm -f *~
 
 new :
 	$(MAKE) clean
