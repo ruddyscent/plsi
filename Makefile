@@ -3,7 +3,7 @@
 CC = mpicc.mpich2
 FC = mpif90.mpich2
 
-SUBDIRS = summer_camp
+SUBDIRS = summer_camp quinn
 CFLAGS = -g -Wall -std=c99 -pedantic
 FCFLAGS = -g -Wall
 LIBS = -lm
