@@ -8,7 +8,7 @@ FCFLAGS = -g -Wall
 LIBS = -lm
 LDFLAGS = $(LIBS)
 
-TARGET = fig8-8
+TARGET = fig8-8 fig8-14 gen_matrix gen_vector
 
 .PHONY : clean cleandiff cleanobj cleanbackup all new
 

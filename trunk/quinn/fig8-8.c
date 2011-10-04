@@ -2,9 +2,12 @@
  * Matrix-vector multiplication, version 1
  *
  * This code is the simplifed version of Figure 8.8 at
- * M. J. Quinn, Parallel programming in C with MPI and OpenMP, 1st ed. 
- * 1221 Avenue of the Americas, New York, NY 10020: McGraw-Hill Higher 
+ * M. J. Quinn, Parallel programming in C with MPI and OpenMP, 
+ * 1st ed. 1221 Avenue of the Americas, New York, NY 10020: 
+ * McGraw-Hill Higher 
  * Education, 2004.
+ * 
+ * Usage: mpiexec -n <# of procs> fig8-8 <matrix data file> <vector data file>
  * 
  * Programmed by Kyungwon Chun
  */
@@ -17,23 +20,9 @@ typedef double dtype;
 #define DTYPE double
 #define mpitype MPI_DOUBLE
 
-/*
- * Given MI_Datatype 't', function 'get_size' returns the size of a single
- * datum of that data type.
- */
-int
-get_size(MPI_Datatype t) 
-{
-  if (t == MPI_BYTE) 
-    return sizeof(char);
-  if (t == MPI_DOUBLE) 
-    return sizeof(double);
-  if (t == MPI_FLOAT) 
-    return sizeof(float);
-  if (t == MPI_INT) 
-    return sizeof(int);
-  MPI_Abort(MPI_COMM_WORLD, -1);
-}
+#define OPEN_FILE_ERROR -1
+#define READ_FILE_ERROR -2
+#define MALLOC_ERROR -3
 
 inline int
 block_size(int id, int p, int m)
@@ -41,170 +30,232 @@ block_size(int id, int p, int m)
   return m / p + (id < m % p ? 1 : 0);
 }
 
-/*
- * Process p-1 opens a file and inputs a two-dimensional
- * matrix, reading and distributing blocks of rows to the
- * other processes.
- */
-void 
-read_row_striped_matrix(char*         s,         // IN - File name
-			DTYPE***      subs,      // OUT - 2D submatrix indices
-			DTYPE**       storage,   // OUT - Submatrix stored here
-			MPI_Datatype  mpi_dtype, // IN - Matrix element type
-			int*          m,         // OUT - Matrix rows
-			int*          n,         // OUT - Matrix cols
-			MPI_Comm      comm)      // IN - Communicator
+void
+read_row_striped_matrix(const char* filename, // IN - File name
+			double** storage,     // OUT - Submatrix stored here
+			int* m,               // OUT - Matrix rows
+			int* n,               // OUT - Matrix columns
+			MPI_Comm comm)        // IN - Communicator
 {
-  int         datum_size; // Size of matrix element
-  int         id;         // Process rank
-  FILE*       infileptr;  // Input file pointer
-  int         local_rows; // Rows on this proc
-  DTYPE**     lptr;       // Pointer into 'subs'
-  int         p;          // Number of processes
-  DTYPE*      rptr;       // Pointer into 'storage'
-  MPI_Status  status;     // Reuslt of receive
-  int         x;          // Result of read
+  int id;                   // Process rank
+  int p;                    // Number of processes
+  FILE* infileptr = NULL;   // Input file pointer
+  int local_rows;           // rows on this proc
+  MPI_Status status;        // Result of receive
 
   MPI_Comm_size(comm, &p);
   MPI_Comm_rank(comm, &id);
-  datum_size = get_size(mpi_dtype);
   
-  /* Process p-1 opnes file, reads size of matrix,
+  /* Process p-1 opens file, reads size of matrix,
      and broadcasts matrix dimensions to other procs. */
-
-  if (id == (p - 1)) {
-    infileptr = fopen(s, "r");
+  if (id == p - 1) {
+    infileptr = fopen(filename, "r");
     if (infileptr == NULL) *m = 0;
     else {
-      fread(m, sizeof(int), 1, infileptr);
-      fread(n, sizeof(int), 1, infileptr);
+      size_t result;
+      result = fread(m, sizeof(int), 1, infileptr);
+      if (result != 1) exit(READ_FILE_ERROR);
+      result = fread(n, sizeof(int), 1, infileptr);
+      if (result != 1) exit(READ_FILE_ERROR);
     }
   }
   MPI_Bcast(m, 1, MPI_INT, p - 1, comm);
-  
-  if (*m == 0) MPI_Abort(MPI_COMM_WORLD, -1);
-  
+  if (*m == 0) MPI_Abort(MPI_COMM_WORLD, OPEN_FILE_ERROR);
   MPI_Bcast(n, 1, MPI_INT, p - 1, comm);
   
   local_rows = block_size(id, p, *m);
   
-  /* Dynamically allocate matrix. Allow double subscripting
+  /* Dynamically allocate matrix. Allow double subscripting 
      through 'a'. */
-
-  *storage = (DTYPE*) malloc(local_rows * *n * datum_size);
-  *subs = (DTYPE**) malloc(local_rows * sizeof(DTYPE*));
-
-  lptr = (DTYPE*) &(*subs[0]);
-  rptr = (DTYPE*) *storage;
-  for (int i = 0; i < local_rows; i++) {
-    *(lptr++) = (DTYPE*) rptr;
-    rptr += *n * datum_size;
-  }
-
-  /* Process p-1 reeds blocks of rows from file and
-     sends each block to the correct destination processes.
-     The alst block it keeps. */
-
+  *storage = (double *) malloc(local_rows * *n * sizeof(double));
+  if (*storage == NULL) MPI_Abort(MPI_COMM_WORLD, MALLOC_ERROR);
+  
+  /* Process p-1 reads blocks of rows from file and sends
+     each block to the correct destination process. The 
+     last block it keeps. */
   if (id == p - 1) {
     for (int i = 0; i < p - 1; i++) {
-      int bsize = block_size(i, p, *m);
-      x = fread(*storage, datum_size, block_size * *n, infileptr);
-      MPI_Send(*storage, block_size * *n, dtype, i, 0,comm);
+      size_t result;
+      int bsize;
+      double* block;
+
+      bsize = block_size(i, p, *m) * *n;
+      block = (double*) malloc(bsize * sizeof(double));
+      result = fread(block, sizeof(double), bsize, infileptr);
+      if (result != bsize) exit(READ_FILE_ERROR);
+      MPI_Send(block, bsize, MPI_DOUBLE, i, 0, comm);
+      free(block);
     }
-    x = fread(*storage, datum_size, local_rows * *n, infileptr);
+    size_t result;
+    result = fread(*storage, sizeof(double), local_rows * *n, infileptr);
     fclose(infileptr);
-  }
-  else
-    MPI_Recv(*storage, local_rows * *n, dtype, p - 1, 0, comm, &status);
+  } else
+    MPI_Recv(*storage, local_rows * *n, MPI_DOUBLE, p - 1, 0, comm, &status);
 }
-
-/* 
- * This function is used to transform a vector from a block distribution
- * to a replicated distribution within a communicator.
- */
-void 
-replicate_block_vector(void*        ablock, // IN - Block-distributed vector
-		       int          n,      // IN - Elements in vector
-		       void*        arep,   // OUT - Replicated vector
-		       MPI_Datatype dtype,  // IN - Element type
-		       MPI_Comm comm)       // IN - Communicator
-{
-  int* cnt;  // Elements contributed by each process
-  int* dsp; // Displacement in concatenated array
-  int id;    // Process id
-  int p;     // Processes in communicator
-  
-  MPI_Comm_size(comm, &p);
-  MPI_Comm_rank(comm, &id);
-  
-  cnt = malloc(p * sizeof(int));
-  dsp = malloc(p * sizeof(int));
-  *cnt = block_size(id, p, n);
-  *dsp = 0;
-  for (int i = 1; i < p; i++) {
-    *(dsp + i) = *(dsp + i - 1) + *(cnt + i - 1);
-    *(cnt + i) = block_size(id, p, n);
-  }
-  
-  MPI_Allgatherv(ablock, cnt[id], dtype, arep, cnt, dsp, dtype, comm);
-  
-  free(cnt);
-  free(dsp);
-}
-
-/*
- * Open a file containing a vector, read its contents, and repliate
- * the vector among all processes in a communicator.
- */
 
 void
-read_replicated_vector(char*        s,     // IN - File nmae
-		       void**       v,     // OUT - Vector
-		       MPI_Datatype dtype, // IN - Vector type
-		       int*         n,     // OUT - Vector length
-		       MPI_Comm     comm)  // IN - Communicator
+print_sub_matrix(const double* const storage, // IN - Matrix elements
+		 int m,                       // IN - Matrix rows
+		 int n)                       // IN - Matrix columns
 {
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
+      printf("%6.3f ", *(storage + i * n + j));
+    }
+    putchar('\n');
+  }
+}
+
+void
+print_row_striped_matrix(double* storage, // IN - Matrix elements
+			 int m,           // IN - Matrix rows
+			 int n,           // IN - Matrix columns
+			 MPI_Comm comm)   // IN - Communicator
+{
+  int id;            // Process rank
+  int p;             // Number of processes
+  int local_rows;    // This proc's lows
+  MPI_Status status; // Result of receive
+
+  MPI_Comm_rank(comm, &id);
+  MPI_Comm_size(comm, &p);
+
+  local_rows = block_size(id, p, m);
+  if (id == 0) {
+    print_sub_matrix(storage, local_rows, n);
+    for (int i = 1; i < p; i++) {
+      double* block;
+      block = (double *) malloc(block_size(i, p, m) * n * sizeof(double));
+      if (block == NULL) exit(MALLOC_ERROR);
+
+      MPI_Recv(block, block_size(i, p, m) * n, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &status);
+      print_sub_matrix(block, block_size(i, p, m), n);
+
+      free(block);
+    }
+  }
+  else
+    MPI_Send(storage, local_rows * n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+}
+
+void
+read_replicated_vector(const char* const s, // IN - File name
+		       double** v,          // OUT - Vector
+		       int* l,              // OUT - Vector length
+		       MPI_Comm comm)       // IN - Communicator
+{
+  int id;                 // Process id
+  int p;                  // Processes in communicator
+  FILE* infileptr = NULL; // input file pointer
+
+  MPI_Comm_rank(comm, &id);
+  MPI_Comm_size(comm, &p);
+
+  if (id == p - 1) {
+    infileptr = fopen(s, "r");
+    if (infileptr == NULL) *l = 0;
+    else {
+      size_t result;
+      result = fread(l, sizeof(int), 1, infileptr);
+      if (result != 1) exit(READ_FILE_ERROR);
+    }
+  }
+  MPI_Bcast(l, 1, MPI_INT, p - 1, MPI_COMM_WORLD);
+  if (*l == 0) MPI_Abort(MPI_COMM_WORLD, OPEN_FILE_ERROR);
   
+  *v = (double*) malloc(*l * sizeof(double));
+
+  if (id == p - 1) {
+    size_t result;
+    result = fread(*v, sizeof(double), *l, infileptr);
+    fclose(infileptr);
+  }
+  MPI_Bcast(*v, *l, MPI_DOUBLE, p - 1, MPI_COMM_WORLD);
+}
+
+void
+print_replicated_vector(const double* const v, // IN - Vector pointer
+	     int l,                 // IN - Length of vector
+	     MPI_Comm comm)         // IN - Communicator
+{
+  int id; // Process rank
+
+  MPI_Comm_rank(comm, &id);
+  if (id == 0) {
+    for (int i = 0; i < l; i++) {
+      printf("%6.3f ", *(v + i));
+    }
+    putchar('\n');
+  }
+}
+
+void
+print_striped_vector(double* v,     // IN - vector pointer
+		     int l,         // IN - length of vector
+		     MPI_Comm comm) // IN - communicator
+{
+  int id; // process rank
+  int p;  // number of processes
+  int local_block;
+  MPI_Status status; // result of receive
+
+  MPI_Comm_rank(comm, &id);
+  MPI_Comm_size(comm, &p);
+
+  local_block = block_size(id, p, l);
+  if (id == 0) {
+    for (int i = 0; i < local_block; i++)
+      printf("%6.3f ", *(v + i));
+    for (int i = 1; i < p; i++) {
+      int bsize;
+      double* block;
+
+      bsize = block_size(i, p, l);
+      block = (double*) malloc(bsize * sizeof(double));
+      MPI_Recv(block, bsize, MPI_DOUBLE, i, 0, comm, &status);
+      for (int j = 0; j < bsize; j++)
+	printf("%6.3f ", *(block + j));
+      free(block);
+    }
+    putchar('\n');
+  } else 
+    MPI_Send(v, local_block, MPI_DOUBLE, 0, 0, comm);
 }
 
 int 
 main(int argc, char *argv[])
 {
-  dtype **a;      // First factor, a matrix
-  dtype *b;       // Second factor, a vector
-  dtype *c_block; // Partial product vector
-  dtype *c;       // Replicated product vector
-  dtype *storage; // Matrix element stored here
-  int i, j;       // Loop indices
-  int id;         // Process ID number
-  int m;          // Rows in matrix
-  int n;          // Columns in matrix
-  int nprime;     // Elements in vector
-  int p;          // Number of processes
-  int rows;       // Number of rows on this process
+  int id;          // Process ID number
+  int p;           // Number of processes
+  int l;           // Elements in vector
+  int m;           // Rows in matrix
+  int n;           // Columns in matrix
+  double* a;       // First factor, a matrix
+  double* b;       // Second factor, a vector
+  double* c;       // Matrix elements stored here
+  int rows;        // Number of rows on this process
 
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &id);
   MPI_Comm_size(MPI_COMM_WORLD, &p);
-  
-  read_row_striped_matrix(argv[1], (void*) &a, (void*) &storage, 
-			  mpitype, &m, &n, MPI_COMM_WORLD);
+
+  read_row_striped_matrix(argv[1], &a, &m, &n, MPI_COMM_WORLD);
+  print_row_striped_matrix(a, m, n, MPI_COMM_WORLD);
+  if (id == 0) putchar('\n');
+  read_replicated_vector(argv[2], &b, &l, MPI_COMM_WORLD);
+  print_replicated_vector(b, l, MPI_COMM_WORLD);
+  if (id == 0) putchar('\n');
+
   rows = block_size(id, p, m);
-  // print_row_striped_matrix((void**) a, mpitype, m, n, MPI_COMM_WORLD);
-  read_replicated_vector(argv[2], (void *) &b, mpitype, &nprime, MPI_COMM_WORLD);
-  // print_replicated_vector(b, mpitype, nprime, MPI_COMM_WORLD);
+  c = (double*) calloc(rows, sizeof(double));
   
-  c_block = (DTYPE*) malloc(rows * sizeof(dtype));
-  c = (DTYPE*) malloc(n * sizeof(dtype));
-  
-  for (i = 0; i < rows; i++) {
-    c_block[i] = 0.0;
-    for (j = 0; j < n; j++)
-      c_block[i] += a[i][j] + b[j];
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < n; j++) {
+      *(c + i) += *(a + i * n + j) * *(b + j);
+    }
   }
 
-  replicate_block_vector(c_block, n, (void*) c, mpitype, MPI_COMM_WORLD);
-  //  print_replicated_vector(c, mpitype, n, MPI_COMM_WORLD);
+  print_striped_vector(c, l, MPI_COMM_WORLD);
 
   MPI_Finalize();
   return EXIT_SUCCESS;
