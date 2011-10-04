@@ -1,9 +1,9 @@
 /*
- * Generate a random matrix with m rows and n columns where m and n are 
+ * Generate a random vector with m rows and n columns where m and n are 
  * given as arguments and write it to a file with the user given name
  * in a binary format.
  *
- * Usage: gen_matrix [filename] [# of rows] [# of columns]
+ * Usage: gen_vector [filename] [# of elements]
  *
  * Programmed by Kyungwon Chun
  */
@@ -14,13 +14,13 @@
 
 int main(int argc, char** argv)
 {
-  if (argc != 4) {
-    fprintf(stderr, "Usage: gen_matrix [filename] [# of rows] [# of columns]\n");
+  if (argc != 3) {
+    fprintf(stderr, "Usage: gen_vector [filename] [# of elements]\n");
     exit(EXIT_FAILURE);
   }
 
-  char* filename = argv[1];
-  int m = atoi(argv[2]), n = atoi(argv[3]);
+  const char* const filename = argv[1];
+  const int m = atoi(argv[2]);
 
   FILE* file_ptr;
   double* data_ptr;
@@ -32,22 +32,19 @@ int main(int argc, char** argv)
   }
 
   srand(time(NULL));
-  data_ptr = (double*) malloc(m * n * sizeof(double));
-  for (int i = 0; i < m * n; i++) {
+  data_ptr = (double*) malloc(m * sizeof(double));
+  for (int i = 0; i < m; i++) {
     data_ptr[i] = (double)rand() / rand();
   }
 
-  printf("(%d, %d)\n", m, n);
+  printf("(%d)\n", m);
   for (int i = 0; i < m; i++) {
-    for (int j = 0; j < n; j++) {
-      printf("%6.3f ", *(data_ptr + i * n + j));
-    }
-    putchar('\n');
-  }  
+    printf("%6.3f ", data_ptr[i]);
+  }
+  putchar('\n');
 
   fwrite(&m, sizeof(int), 1, file_ptr);
-  fwrite(&n, sizeof(int), 1, file_ptr);
-  fwrite(data_ptr, sizeof(double), m * n, file_ptr);
+  fwrite(data_ptr, sizeof(double), m, file_ptr);
   fclose(file_ptr);
   free(data_ptr);
 
