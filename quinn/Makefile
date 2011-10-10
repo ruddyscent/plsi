@@ -1,14 +1,14 @@
 .SUFFIXES : .c .f90
 
-CC = mpicc.mpich2
-FC = mpif90.mpich2
+CC = mpicc
+FC = mpif90
 
 CFLAGS = -g -Wall -std=c99 -pedantic
 FCFLAGS = -g -Wall
 LIBS = -lm
 LDFLAGS = $(LIBS)
 
-TARGET = fig8-8 fig8-14 gen_matrix gen_vector
+TARGET = fig8-8 fig8-14 gen_matrix gen_vector fft_serial fft_parallel
 
 .PHONY : clean cleandiff cleanobj cleanbackup all new
 
@@ -20,7 +20,7 @@ all : $(TARGET)
 clean : cleandiff cleanobj cleanbackup
 	rm -f $(TARGET)
 
-leandiff :
+cleandiff :
 	rm -f *.diff
 
 cleanobj :
