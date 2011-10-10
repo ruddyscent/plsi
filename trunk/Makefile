@@ -1,9 +1,9 @@
 .SUFFIXES : .c .f90
 
-CC = mpicc.mpich2
-FC = mpif90.mpich2
+CC = mpicc
+FC = mpif90
 
-SUBDIRS = summer_camp quinn
+SUBDIRS = summer_camp quinn main
 CFLAGS = -g -Wall -std=c99 -pedantic
 FCFLAGS = -g -Wall
 LIBS = -lm
